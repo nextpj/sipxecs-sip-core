@@ -7,8 +7,6 @@ SUBDIRS = . test
 EXTRA_DIST =
 
 sipxrls_LDADD = \
-        @SIPXCALL_LIBS@ \
-	@SIPXMEDIAADAPTER_LIBS@ \
 	@SIPXCOMMSERVER_LIBS@ \
 	@GIPS_NEQ_OBJS@ \
 	-lboost_thread-mt \

@@ -1,0 +1,42 @@
+box: nextpj/sip-core-docker:d5d69ca
+no-response-timeout: 15
+build:
+  steps:
+   - nextpj/add-ssh-key:
+        keyname: SSH_KEY
+        host: github.com
+   - add-to-known_hosts:
+        hostname: github.com
+   - script:
+        name: compile
+        code: |
+          ls /root/.ssh/
+          cat /root/.ssh/config
+          #git checkout release-14.10
+          #git pull
+          # delete symbolic link file $1, recreate link $1 to file $2
+          function redo_links () { if [ -h $1 ]; then rm $1; ln -s $2 $1; echo "redone symbolic link $1 to $2"; else echo "$1 is not a symbolic link, aborting" ; fi; }
+          SIPXECS_CORE_BUILD_COMPONENTS="sipXportLib sipXtackLib sipXsupervisor sipXcommserverLib sipXcommons sipXrelay sipXproxy sipXpublisher sipXregistry sipXtools sipXviewer sipXacccode" 
+          for DIR in $SIPXECS_CORE_BUILD_COMPONENTS; do redo_links $DIR/config  ../config/; done
+          redo_links sipXsqa/src/swig/sqaclient.h ../../include/sqa/sqaclient.h
+          autoreconf -if
+          mkdir build
+          cd build
+          echo $SIPXECS_CORE_BUILD_COMPONENTS > .modules-include
+          ../configure --enable-rpm --disable-dep-check UPSTREAM_URL=http://download2.sipfoundry.org/pub/staging/14.10-unstable/ MIRROR_SITE=http://download2.sipfoundry.org/pub PACKAGE_REVISION="stable"  PACKAGE_VERSION="14.10"
+          make repo-create
+          make repo-webserver
+          #make sipXportLib.rpm-nomock
+          for COMPONENT in $SIPXECS_CORE_BUILD_COMPONENTS; do echo "make ${COMPONENT}.rpm-nomock"; make ${COMPONENT}.rpm-nomock; if [ $? -ne 0 ]; then echo "Failed building ${COMPONENT}.rpm-nomock"; break; else echo "Successfully built ${COMPONENT}.rpm-nomock"; fi; done
+
+deploy:
+  steps:
+   - nextpj/add-ssh-key:
+        keyname: SSH_KEY
+        host: $DEPLOY_HOST_IP
+   - script:
+        name: copy rpms
+        code: |
+          cd build
+          ls -la repo/CentOS_6/x86_64/*.rpm
+          scp -v -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no repo/CentOS_6/x86_64/*.rpm $DEPLOY_USER@$DEPLOY_HOST_IP:/$DEPLOY_DIR_FULL_PATH

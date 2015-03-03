@@ -127,6 +127,25 @@ $(sipx:=.srpm) : %.srpm : %.dist $(MOCK_INIT_TEST) $(MOCK_RESULTS_DIR)
 	$(SRC)/tools/dep save $(DISTRO).$(PROJ).rpm $(SRC)/$(PROJ) \
 	  $(foreach D,$($(PROJ)_DEPS),$(DISTRO).$(D).rpm)
 
+#build rpms without mock tool
+%.rpm-nomock : %.dist $(MOCK_RESULTS_DIR) repo-webserver
+	rpmbuild -ts $(SRPM_DEFS) $($(PROJ)_SRPM_DEFS) --nodeps $($(PROJ)_TAR)
+	test -d $(MOCK_SRPM_DIR) || mkdir -p $(MOCK_SRPM_DIR)
+	cp $(shell rpm --eval '%{_topdir}')/SRPMS/$($(PROJ)_SRPM) $(MOCK_SRPM_DIR)
+	rpmbuild --rebuild $($(PROJ)_RPM_DEPS) $(MOCK_SRPM_DIR)/$($(PROJ)_SRPM) || \
+	(tail -100 $(MOCK_RESULTS_DIR)/build.log ; false)
+	find $(MOCK_RESULTS_DIR) -name '*.src.rpm' -exec rm {} \;
+	#if we built sipxcommons rpm then we need to install it with nodeps otherwise it fails
+	find $(shell rpm --eval '%{_topdir}')/RPMS/ -name 'sipxcommons*rpm' \( -exec ls {} \; -false -o -exec rpm -i --nodeps {} \; -false -o -exec mv {} $(MOCK_RESULTS_DIR) \; \)
+	#cycle through all built rpms, w/o devel rpms, list them, install them, move them to repo (these needs to be installed before devel rpms)
+	find $(shell rpm --eval '%{_topdir}')/RPMS/ -name '*.rpm' ! -name '*devel*' \( -exec ls {} \; -false -o -exec rpm -i {} \; -false -o -exec mv {} $(MOCK_RESULTS_DIR) \; \)
+	#cycle through all built devel rpms, list them, install them, move them to repo
+	find $(shell rpm --eval '%{_topdir}')/RPMS/ -name '*devel*.rpm' \( -exec ls {} \; -false -o -exec rpm -i {} \; -false -o -exec mv {} $(MOCK_RESULTS_DIR) \; \)
+	# generate repo AFTER build otherwise it's unusable as a repo to feed to next build or other systems.
+	cd $(MOCK_RESULTS_DIR); createrepo $(CREATEREPO_OPTS) .
+	$(SRC)/tools/dep save $(DISTRO).$(PROJ).rpm $(SRC)/$(PROJ) \
+	$(foreach D,$($(PROJ)_DEPS),$(DISTRO).$(D).rpm)
+
 $(MOCK_INIT_TEST) :
 	$(MAKE) repo-init
 

@@ -24,18 +24,20 @@ if test -d ../.git; then
 fi
 
 VERSION=$1
+REV=$1
 if [ $VERSION == "14.10" ]; then
-    VERSION="4.6.0"
+    REV=`git describe --abbrev=5 --always HEAD`
 fi
 if [ $VERSION == "1.4.4" ]; then
-    VERSION="1.0.7"
+    VER_REV=`git describe --abbrev=5 --match="v1.0.7" HEAD`
+    REV=`echo "${VER_REV}" | sed -e 's/^v[0-9.]\+-//g' -e 's/-g\?/./g'`
 fi
-VER_REV=`git describe --abbrev=5 --match="v${VERSION}" HEAD`
+
 if [ "$?" != "0" ]; then
     echo "Could not find tag v$VERSION" 1>&2
     exit 1
 fi
-REV=`echo "${VER_REV}" | sed -e 's/^v[0-9.]\+-//g' -e 's/-g\?/./g'`
+
 if [ -n "$parent_rev" ]; then
   echo $[ ${parent_rev} + ${REV%.*} ].${REV#*.}
 else

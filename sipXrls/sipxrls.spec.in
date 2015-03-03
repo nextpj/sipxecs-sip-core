@@ -15,10 +15,7 @@ BuildRequires: cppunit-devel
 BuildRequires: pcre-devel >= 4.5
 BuildRequires: openssl-devel
 BuildRequires: zeromq-devel
-BuildRequires: sipxcalllib-devel >= %version
 BuildRequires: sipxcommserverlib-devel >= %version
-BuildRequires: sipxmediaadapterlib-devel >= %version
-BuildRequires: sipxmedialib-devel >= %version
 BuildRequires: sipxportlib-devel >= %version
 BuildRequires: sipxtacklib-devel >= %version
 BuildRequires: sipxsqa-devel >= %version
@@ -26,7 +23,6 @@ BuildRequires: sipxsqa-devel >= %version
 Source:   %name-%version.tar.gz
 Obsoletes: %name-devel
 
-Requires: sipxcalllib >= %version
 Requires: sipxcommserverlib >= %version
 Requires: chkconfig
 

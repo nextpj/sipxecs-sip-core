@@ -21,17 +21,13 @@ BuildRequires: libapr1-devel
 BuildRequires: httpd-devel
 BuildRequires: apr-devel
 %endif
-BuildRequires: sipxcalllib-devel >= %version
 BuildRequires: sipxcommserverlib-devel >= %version
-BuildRequires: sipxmediaadapterlib-devel >= %version
-BuildRequires: sipxmedialib-devel >= %version
 BuildRequires: sipxportlib-devel >= %version
 BuildRequires: sipxtacklib-devel >= %version
 
 Source:   %name-%version.tar.gz
 Obsoletes: %name-devel
 
-Requires: sipxcalllib >= %version
 Requires: sipxcommserverlib >= %version
 Requires: chkconfig
 
